@@ -343,6 +343,29 @@ pub async fn api_video(state: State<'_, Api>, id: i64) -> Result<Value, String> 
 
 #[tauri::command]
 pub async fn api_play(state: State<'_, Api>, id: i64, ep: u32) -> Result<Value, String> {
+    // 2026-11 上游改版：老端点 GET /api/videos/:id/play 仍返回 200，但媒体字段全是空串
+    // （元数据照常给），前端只能拿到「暂无播放地址」。现行端点为
+    // POST /api/videos/:id/episodes/:ep/playback，返回 { streams: { main, hevc? }, ... }，
+    // m3u8 / key / 分片的鉴权都内嵌在各自 URL 的 auth_key 参数里，代理层无需额外处理。
+    // 这里把新返回映射回老结构（前端只消费 video_url / video_url_hevc），取不到再回退老端点。
+    let token = state.token();
+    if let Ok(mut data) = edge(
+        "POST",
+        &format!("/api/videos/{id}/episodes/{ep}/playback"),
+        None,
+        token.as_deref(),
+    )
+    .await
+    {
+        let main = data["streams"]["main"].as_str().unwrap_or("").to_string();
+        if !main.is_empty() {
+            data["video_url"] = json!(main);
+            data["video_url_hevc"] = json!(data["streams"]["hevc"].as_str().unwrap_or(""));
+            data["id"] = json!(id);
+            data["ep_num"] = json!(ep);
+            return Ok(data);
+        }
+    }
     state
         .get(&format!("/api/videos/{id}/play?ep={ep}&page_texts=0"))
         .await

@@ -9,8 +9,8 @@ import { IBack, IChevR, IGrid, ITrophy } from "../icons";
 export const CHANNELS = [
   { cate: "ai-duanju", name: "AI成人短剧", desc: "高能反转 · 一口气看完" },
   { cate: "ai-manju", name: "AI成人漫剧", desc: "国创漫剧 · 每周更新" },
-  { cate: "ai-huanlian", name: "AI换脸", desc: "换脸演绎 · 全新剧情" },
-  { cate: "ai-mogai", name: "AI魔改", desc: "魔改名场面 · 脑洞大开" },
+  // 上游已下线「AI换脸 / AI魔改」两个分类（接口返回 410 内容已下线，/api/home 的
+  // cate_rec 也只剩这两个），先从列表移除；上游若恢复再加回。
 ] as const;
 
 /* ================= 分类总览 ================= */
